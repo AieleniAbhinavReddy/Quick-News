@@ -10,101 +10,88 @@ export default class News extends Component {
     title: "Todays - Top headlines",
     country: "in",
   };
+
   static propTypes = {
     pageSize: PropTypes.number,
     category: PropTypes.string,
     title: PropTypes.string,
     country: PropTypes.string,
   };
-  articles = [];
+
   constructor() {
     super();
     this.state = {
-      articles: this.articles,
+      articles: [],
       page: 1,
       loading: false,
       totalResults: 0,
     };
   }
-  async componentDidMount() {
-    let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=c83dec0a9f67470bac41872953fa1e6e&page=${this.state.page}&pageSize=${this.props.pageSize}`;
-    this.setState({ loading: true });
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    this.setState({
-      articles: parsedData.articles,
-      totalResults: parsedData.totalResults,
-      loading: false,
-    });
-  }
-  handlePre = async () => {
-    let url = `https://newsapi.org/v2/top-headlines?country=${
-      this.props.country
-    }&category=${
-      this.props.category
-    }&apiKey=c83dec0a9f67470bac41872953fa1e6e&page=${
-      this.state.page - 1
-    }&pageSize=${this.props.pageSize}`;
-    this.setState({ loading: true });
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    this.setState({
-      page: this.state.page - 1,
-      articles: parsedData.articles,
-      loading: false,
-    });
-  };
-  handleNxt = async () => {
-    if (
-      !(
-        this.state.page + 1 >
-        Math.ceil(this.state.totalResults / this.props.pageSize)
-      )
-    ) {
-      let url = `https://newsapi.org/v2/top-headlines?country=${
-        this.props.country
-      }&category=${
-        this.props.category
-      }&apiKey=c83dec0a9f67470bac41872953fa1e6e&page=${
-        this.state.page + 1
-      }&pageSize=${this.props.pageSize}`;
+
+  fetchNews = async (page) => {
+    try {
       this.setState({ loading: true });
+      const apiKey = process.env.REACT_APP_NEWS_API_KEY;
+      let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${apiKey}&page=${page}&pageSize=${this.props.pageSize}`;
       let data = await fetch(url);
       let parsedData = await data.json();
       this.setState({
-        page: this.state.page + 1,
-        articles: parsedData.articles,
+        articles: parsedData.articles || [],
+        totalResults: parsedData.totalResults || 0,
         loading: false,
+        page: page,
       });
+    } catch (error) {
+      console.error("Error fetching news:", error);
+      this.setState({ articles: [], loading: false });
     }
   };
+
+  componentDidMount() {
+    this.fetchNews(this.state.page);
+  }
+
+  handlePre = () => {
+    if (this.state.page > 1) {
+      this.fetchNews(this.state.page - 1);
+    }
+  };
+
+  handleNxt = () => {
+    const totalPages = Math.ceil(this.state.totalResults / this.props.pageSize);
+    if (this.state.page + 1 <= totalPages) {
+      this.fetchNews(this.state.page + 1);
+    }
+  };
+
   render() {
     return (
       <div className="container">
         <h1 style={{ margin: "35px" }} className="text-center">
           {this.props.title}
         </h1>
+
         {this.state.loading && <Loading />}
+
         <div className="row">
           {!this.state.loading &&
-            this.state.articles.map((element) => {
-              return (
-                <div className="col-md-4" key={element.url}>
-                  <NewsTile
-                    title={!element.title ? "" : element.title.slice(0, 60)}
-                    date={element.publishedAt.slice(0, 10)}
-                    author={element.author}
-                    desc={
-                      !element.description
-                        ? ""
-                        : element.description.slice(0, 100)
-                    }
-                    imgUrl={element.urlToImage}
-                    newsUrl={element.url}
-                  />
-                </div>
-              );
-            })}
+            this.state.articles &&
+            this.state.articles.map((element) => (
+              <div className="col-md-4" key={element.url}>
+                <NewsTile
+                  title={!element.title ? "" : element.title.slice(0, 60)}
+                  date={element.publishedAt?.slice(0, 10)}
+                  author={element.author}
+                  desc={
+                    !element.description
+                      ? ""
+                      : element.description.slice(0, 100)
+                  }
+                  imgUrl={element.urlToImage}
+                  newsUrl={element.url}
+                />
+              </div>
+            ))}
         </div>
 
         <div
