@@ -36,9 +36,13 @@ export default class News extends Component {
       if (!apiKey) {
         console.error("API key not found. Check Vercel environment variables.");
       }
-      const url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${apiKey}&page=${page}&pageSize=${this.props.pageSize}`;
+      const targetURL = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${apiKey}&page=${page}&pageSize=${this.props.pageSize}`;
+      const url = `https://api.allorigins.win/get?url=${encodeURIComponent(
+        targetURL
+      )}`;
       let data = await fetch(url);
-      let parsedData = await data.json();
+      let json = await data.json();
+      let parsedData = JSON.parse(json.contents); // this is the actual news data
       this.setState({
         articles: parsedData.articles || [],
         totalResults: parsedData.totalResults || 0,
