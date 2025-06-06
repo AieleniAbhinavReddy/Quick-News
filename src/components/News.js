@@ -32,7 +32,11 @@ export default class News extends Component {
     try {
       this.setState({ loading: true });
       const apiKey = process.env.REACT_APP_NEWS_API_KEY;
-      let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${apiKey}&page=${page}&pageSize=${this.props.pageSize}`;
+      console.log(apiKey);
+      if (!apiKey) {
+        console.error("API key not found. Check Vercel environment variables.");
+      }
+      const url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${apiKey}&page=${page}&pageSize=${this.props.pageSize}`;
       let data = await fetch(url);
       let parsedData = await data.json();
       this.setState({
